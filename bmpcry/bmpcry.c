@@ -12,7 +12,11 @@ int main(int argc, char **argv)
 {
 	if (argc < 2 || argc > 3)
 	{
-		fprintf(stderr, "Usage: %s <path> [<message>]", argv[0]);
+		fprintf(stderr, "Usage: %s <path> [<message>]\n", argv[0]);
+		printf("if you include a message, the program encodes the message into the supplied\n"
+		       "file and outputs the encoded file into out.bmp, this only works with bmps.\n"
+		       "if you don't supply a message, the program decodes the supplied file and\n"
+		       "prints the decoded message into stdout.\n");
 		return EXIT_FAILURE;
 	}
 
