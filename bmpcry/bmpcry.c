@@ -1,45 +1,64 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define OFFSET 128
 #define MAX_STRING 1024
 #define STRIDE 1
 
-void encode(char *path, char *msg);
-void decode(char *path, char *msg);
+
+void fail(char *progname)
+{
+	printf("usage: %s (-help | -decode | -encode) <srcPath> [<desPath> <msg>]\n", progname);
+	exit(EXIT_FAILURE);
+}
+
+void encode(char *srcPath, char *desPath, char *msg);
+void decode(char *srcPath, char *msg);
 
 int main(int argc, char **argv)
 {
-	if (argc < 2 || argc > 3)
+	if (argc == 1)
+		fail(argv[0]);
+
+	if (!strcmp(argv[1], "-help"))
 	{
-		fprintf(stderr, "Usage: %s <path> [<message>]\n", argv[0]);
-		printf("if you include a message, the program encodes the message into the supplied\n"
-		       "file and outputs the encoded file into out.bmp, this only works with bmps.\n"
-		       "if you don't supply a message, the program decodes the supplied file and\n"
-		       "prints the decoded message into stdout.\n");
-		return EXIT_FAILURE;
+		printf("File encoder/decoder\nWorks best on bitmaps\nEncode:\n%s -encode <srcPath> <desPath> <msg>\nDecode:\n%s -decode <srcPath>\n", argv[0], argv[0]);
+		return EXIT_SUCCESS;
 	}
 
-	if (argc == 2)
+	else if (!strcmp(argv[1], "-encode"))
 	{
+		if (argc != 5)
+			fail(argv[0]);
+
+		encode(argv[2], argv[3], argv[4]);
+
+		return EXIT_SUCCESS;
+	}
+
+	else if (!strcmp(argv[1], "-decode"))
+	{
+		if (argc != 3)
+			fail(argv[0]);
+
 		char msg[MAX_STRING];
-		decode(argv[1], msg);
+
+		decode(argv[2], msg);
+		
 		printf("%s\n", msg);
+
+		return EXIT_SUCCESS;
 	}
 
-	else if (argc == 3)
-	{
-		encode(argv[1], argv[2]);
-	}
-
-	return EXIT_SUCCESS;
+	fail(argv[0]);
 }
 
-void encode(char *path, char *msg)
+void encode(char *srcPath, char *desPath, char *msg)
 {
-	FILE *f_src = fopen(path, "r+");
+	FILE *f_src = fopen(srcPath, "r+");
 
-	FILE *f_des = fopen("out.bmp", "w");
+	FILE *f_des = fopen(desPath, "w");
 
 	int msgIndex = 0;
 	int charOffset = 0;
@@ -57,7 +76,6 @@ void encode(char *path, char *msg)
 
 			c &= 0b11111110;
 			c |= (msgc >> (7 - charOffset)) & 0x1;
-
 
 			++charOffset;
 			if (charOffset == 8)
@@ -77,9 +95,9 @@ void encode(char *path, char *msg)
 	}
 }
 
-void decode(char *path, char *msg)
+void decode(char *srcPath, char *msg)
 {
-	FILE *fp = fopen(path, "r");
+	FILE *f_src = fopen(srcPath, "r");
 
 	int fileIndex = 0;
 
@@ -88,13 +106,13 @@ void decode(char *path, char *msg)
 
 	int stride = 0;
 
-	while (!feof(fp))
+	while (!feof(f_src))
 	{
-		char c = fgetc(fp);
+		char c = fgetc(f_src);
 
 		if (!stride && fileIndex >= OFFSET)
 		{
-			if(!charOffset)
+			if (!charOffset)
 				msg[msgIndex] = 0;
 
 			msg[msgIndex] |= (c & 0x1) << (7 - charOffset);
